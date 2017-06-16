@@ -2,7 +2,7 @@ import telebot
 from paradas import Paradas
 from peticion import peticion
 
-token = "381479716:AAFGhzS1Dh0o7GCmILVeiOPrn-YZ4lTHvg4"
+token = ""
 bot = telebot.TeleBot(token)
 
 @bot.message_handler(commands=['start', 'help'])
