@@ -1,4 +1,4 @@
-[submodule "api"]
-	path = api
+[submodule "lib/api"]
+	path = lib/api
 	url = https://github.com/dpeite/time-for-vbus-api
-	branch = updates_for_telegram
+	branch = updates_for_telegram_appengine
