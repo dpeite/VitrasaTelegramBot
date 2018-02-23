@@ -15,7 +15,7 @@ def obtener_parada(message, id):
         parada = vitrasa.get_stop(id).to_dict()
         print parada
         print buses
-        texto = "*Parada Nº {} - {}*".format(parada["number"], parada["name"])
+        texto = "*Parada Nº {} - {}*".format(parada["number"], parada["name"].encode("utf-8"))
         texto += "\n`{:2} {:2}{:20}\n---------------------------`".format("Min", "L", "Ruta")
         for bus in buses:
             print bus["line"], bus["route"].encode("utf-8"), bus["minutes"]
@@ -26,8 +26,9 @@ def obtener_parada(message, id):
         
     except vitrasa.Error as e:
         bot.send_message(message.chat.id, "{}".format(e.message))
-    except Exception:
-        bot.send_message(message.chat.id, "Se ha producido un error al comunicarse con Vitrasa")
+    except Exception as e:
+        print e
+        bot.send_message(message.chat.id, "Se ha producido un error al realizar la petición")
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
