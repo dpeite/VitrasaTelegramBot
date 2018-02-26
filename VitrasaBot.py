@@ -71,8 +71,8 @@ def obtener_parada(message, id):
             texto += "\n`{:2} {:2} {:20}`".format(bus["minutes"], bus["line"], bus["route"].encode("utf-8"))
 
         markup = types.InlineKeyboardMarkup()
-        itembtna = types.InlineKeyboardButton('Actualizar', callback_data='{"id_parada": ' + str(id) + '}')
-        itembtnb = types.InlineKeyboardButton('Buscar paradas cercanas', switch_inline_query_current_chat="")
+        itembtna = types.InlineKeyboardButton('{} Actualizar'.format((u'\U0001F504').encode("utf-8")), callback_data='{"id_parada": ' + str(id) + '}')
+        itembtnb = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E').encode("utf-8")), switch_inline_query_current_chat="")
         markup.row(itembtna, itembtnb)
 
         try:
@@ -93,25 +93,37 @@ def obtener_parada(message, id):
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    bot.send_message(message.chat.id, "Bienvenido, introduce el numero de la parada que quieras consultar o envía tu ubicacion para localizar la parada más próxima\n")
+    markup = types.InlineKeyboardMarkup()
+    itembtna = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E').encode("utf-8")), switch_inline_query_current_chat="")
+    markup.row(itembtna)
+    #text = "Bienvenido, introduce el numero de la parada que quieras consultar, envía tu ubicacion para localizar la parada más próxima o busca las paradas cercanas\n"
+    text = "Bienvenido, para consultar los horarios necesito alguna información:\n\n \
+    - Puedes enviarme el número de la parada.\n\n \
+    - Puedes enviarme tu ubicación y automaticamente te devolveré la información de la parada más próxima.\n\n \
+    - Puedes hacer click en el botón 'Paradas cercanas' y te mostraré una lista con las paradas ordenadas por proximidad. _(Puedes filtrar esta lista por el nombre de la calle o el número de la parada)_"
+    bot.send_message(message.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
 @bot.message_handler(commands=['about'])
 def about(message):
-    bot.send_message(message.chat.id, "No estamos afiliados a Vitrasa\nCopyright 2017.\nCodigo fuente: https://github.com/dpeite/VitrasaTelegramBot", disable_web_page_preview=True)
+    bot.send_message(message.chat.id, "No estamos afiliados a Vitrasa\nCopyright 2018.\nCodigo fuente: https://github.com/dpeite/VitrasaTelegramBot", disable_web_page_preview=True)
 
 @bot.message_handler(commands=['status'])
 def status(message):
     try:
         vitrasa.get_stop(14264)
-        bot.send_message(message.chat.id, "{} Bot\n{} Servidores de Vitrasa".format((u'\u2705').encode("utf-8"),(u'\u2705').encode("utf-8")))
+        bot.send_message(message.chat.id, "{} Bot\n{} Conexión con Vitrasa".format((u'\u2705').encode("utf-8"),(u'\u2705').encode("utf-8")))
     except Exception:
-        bot.send_message(message.chat.id, "{} Bot\n{} Servidores de Vitrasa".format((u'\u2705').encode("utf-8"), (u'\u274C').encode("utf-8")))
+        bot.send_message(message.chat.id, "{} Bot\n{} Conexión con Vitrasa".format((u'\u2705').encode("utf-8"), (u'\u274C').encode("utf-8")))
 
 @bot.message_handler(content_types=['text'])
 def id_parada(message):
     id = message.text
     if not id.isdigit():
-        bot.send_message(message.chat.id, "Introduce un numero de parada")
+        markup = types.InlineKeyboardMarkup()
+        itembtna = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E').encode("utf-8")), switch_inline_query_current_chat="")
+        markup.row(itembtna)
+        text = "Introduce un número de parada, envíame tu ubicación o busca las paradas más próximas"
+        bot.send_message(message.chat.id, text, reply_markup=markup)
         return
     obtener_parada(message, id)
 
