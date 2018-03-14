@@ -8,8 +8,8 @@ import datetime
 from telebot import types
 from api import vitrasa
 # En caso de querer usar la api http de mlab en vez de usar el driver de pymongo descomentar la linea siguiente
-# from pymongolab import MongoClient
-from pymongo import MongoClient
+from pymongolab import MongoClient
+# from pymongo import MongoClient
 
 API_TOKEN = ''
 
@@ -132,8 +132,8 @@ def obtener_parada(message, id):
         itembtnb = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E').encode("utf-8")), switch_inline_query_current_chat="")
 
         # Si usamos pymongolab descomentar esta query y comentar la siguiente
-        # user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : 'True'}})
-        user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : True}})
+        user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : 'True'}})
+        # user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : True}})
         print "-*---------------"
         print user_data
         print message.from_user.id
@@ -171,8 +171,8 @@ def obtener_parada(message, id):
 
 def del_stop(message, info):
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
-    # db.users.update({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
-    db.users.update_one({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
+    db.users.update({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
+    # db.users.update_one({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
     obtener_parada(message, str(info["parada"]))
      
 def add_stop(message, info):
@@ -185,8 +185,8 @@ def add_stop(message, info):
     paradas_favoritas[str(info["parada"])] = {"name" : parada["name"].encode("utf-8")}
     print paradas_favoritas
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
-    # db.users.update({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
-    db.users.update_one({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
+    db.users.update({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
+    # db.users.update_one({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
     obtener_parada(message, str(info["parada"]))
         
 def obtener_paradas_favoritas(message, info):
@@ -236,8 +236,8 @@ def id_parada(message):
     test = db.users.find_one({'_id': message.from_user.id})
     print test
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
-    # db.users.update({"_id": message.from_user.id }, {"$set": {"_id":message.from_user.id, "username" : message.from_user.username}}, upsert=True)
-    db.users.update_one({"_id": message.from_user.id }, {"$set": {"_id":message.from_user.id, "username" : message.from_user.username}}, upsert=True)
+    db.users.update({"_id": message.from_user.id }, {"$set": {"_id":message.from_user.id, "username" : message.from_user.username}}, upsert=True)
+    # db.users.update_one({"_id": message.from_user.id }, {"$set": {"_id":message.from_user.id, "username" : message.from_user.username}}, upsert=True)
     id = message.text
     if not id.isdigit():
         markup = types.InlineKeyboardMarkup()
