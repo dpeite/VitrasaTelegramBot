@@ -5,3 +5,5 @@ requests-toolbelt
 requests
 six==1.9.0
 suds-jurko
+pymongo
+pymongolab
