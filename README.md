@@ -12,7 +12,7 @@ Por otro lado también es posible guardar las paradas favoritas para poder acced
 
 ## Instalación
 
-El bot está programado en python y utiliza MongoDB como base de datos, hace uso de las siguientes librerias [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBotAPI), [Time for Vbus APITime for Vbus API](https://github.com/dpeite/time-for-vbus-api/tree/updates_for_telegram) [pymongo](https://api.mongodb.com/python/current/), y [Suds](https://bitbucket.org/jurko/suds)
+El bot está programado en python y utiliza MongoDB como base de datos, hace uso de las siguientes librerias [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBotAPI), [Time for Vbus API](https://github.com/dpeite/time-for-vbus-api/tree/updates_for_telegram),  [pymongo](https://api.mongodb.com/python/current/), y [Suds](https://bitbucket.org/jurko/suds)
 
 Existen dos variantes del bot, una versión normal usando pyTelegramBotAPI y pymongo. Y otra versión pensada para usar en Google App Engine, que usa una versión modificada de pyTelegramBotAPI y de este propio bot, webhooks y pymongolab debido a las limitaciones de GAE.
 
