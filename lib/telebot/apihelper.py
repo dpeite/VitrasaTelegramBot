@@ -56,9 +56,14 @@ def _make_request(token, method_name, method='get', params=None, files=None, bas
         return _check_result(method_name, result)['result']
         logger.debug("The server returned: '{0}'".format(result))
     except urllib2.URLError as exc:
+        resp =  exc.read()
         msg = 'The server returned HTTP {0} {1}. Response body:\n[{2}]' \
-              .format(exc.getcode(), exc.reason, exc)
-        raise ApiException(msg, method_name, exc)
+              .format(exc.getcode(), exc.reason, resp)
+        from requests.models import Response
+        response = Response()
+        response.status_code = exc.getcode()
+        response._content = resp
+        raise ApiException(msg, method_name, response)
 
 
 def _check_result(method_name, result):
@@ -126,7 +131,8 @@ def send_message(token, chat_id, text, disable_web_page_preview=None, reply_to_m
     :return:
     """
     method_url = r'sendMessage'
-    payload = {'chat_id': str(chat_id), 'text': text.decode("utf-8").encode("utf-8")}
+    #payload = {'chat_id': str(chat_id), 'text': text.decode("utf-8").encode("utf-8")}
+    payload = {'chat_id': str(chat_id), 'text': text}
     if disable_web_page_preview:
         payload['disable_web_page_preview'] = disable_web_page_preview
     if reply_to_message_id:
@@ -445,7 +451,8 @@ def unban_chat_member(token, chat_id, user_id):
 def edit_message_text(token, text, chat_id=None, message_id=None, inline_message_id=None, parse_mode=None,
                       disable_web_page_preview=None, reply_markup=None):
     method_url = r'editMessageText'
-    payload = {'text': text.decode("utf-8").encode("utf-8")}
+    #payload = {'text': text.decode("utf-8").encode("utf-8")}
+    payload = {'text': text}
     if chat_id:
         payload['chat_id'] = chat_id
     if message_id:
@@ -591,7 +598,7 @@ def send_invoice(token, chat_id, title, description, invoice_payload, provider_t
     :param disable_notification: Sends the message silently. Users will receive a notification with no sound.
     :param reply_to_message_id: If the message is a reply, ID of the original message
     :param reply_markup: A JSON-serialized object for an inline keyboard. If empty, one 'Pay total price' button will be shown. If not empty, the first button must be a Pay button
-    :return: 
+    :return:
     """
     method_url = r'sendInvoice'
     payload = {'chat_id': chat_id, 'title': title, 'description': description, 'payload': invoice_payload,
@@ -632,7 +639,7 @@ def answer_shipping_query(token, shipping_query_id, ok, shipping_options=None, e
     :param ok: Specify True if delivery to the specified address is possible and False if there are any problems (for example, if delivery to the specified address is not possible)
     :param shipping_options: Required if ok is True. A JSON-serialized array of available shipping options.
     :param error_message: Required if ok is False. Error message in human readable form that explains why it is impossible to complete the order (e.g. "Sorry, delivery to your desired address is unavailable'). Telegram will display this message to the user.
-    :return: 
+    :return:
     """
     method_url = 'answerShippingQuery'
     payload = {'shipping_query_id': shipping_query_id, 'ok': ok}
@@ -650,7 +657,7 @@ def answer_pre_checkout_query(token, pre_checkout_query_id, ok, error_message=No
     :param pre_checkout_query_id: Unique identifier for the query to be answered
     :param ok: Specify True if everything is alright (goods are available, etc.) and the bot is ready to proceed with the order. Use False if there are any problems.
     :param error_message: Required if ok is False. Error message in human readable form that explains the reason for failure to proceed with the checkout (e.g. "Sorry, somebody just bought the last of our amazing black T-shirts while you were busy filling out your payment details. Please choose a different color or garment!"). Telegram will display this message to the user.
-    :return: 
+    :return:
     """
     method_url = 'answerPreCheckoutQuery'
     payload = {'pre_checkout_query_id': pre_checkout_query_id, 'ok': ok}
