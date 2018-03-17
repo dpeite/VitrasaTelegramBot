@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import ConfigParser
 import telebot
 import json
 import datetime
@@ -16,11 +17,14 @@ logging.getLogger("urllib3").setLevel(logging.INFO)
 
 logging.info("Inicializando VitrasaBot...")
 
-token = ""
+config = ConfigParser.ConfigParser()
+config.read("conf.ini")
+
+token = config.get("options","bot_token")
 bot = telebot.TeleBot(token)
 # connect to MongoDB, change the << MONGODB URL >> to reflect your own connection string
 # Si usamos pymongolab la siguiente linea tiene que ser nestra api key
-client = MongoClient("<< MONGODB URL >>")
+client = MongoClient(config.get("options","mongodb"))
 db = client.vitrasabot
 
 logging.info("VitrasaBot inicializado correctamente")
