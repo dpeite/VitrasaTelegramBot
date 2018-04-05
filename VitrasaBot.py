@@ -4,6 +4,7 @@ import ConfigParser
 import telebot
 import json
 import datetime
+import pytz
 from telebot import types
 from api import vitrasa
 # En caso de querer usar la api http de mlab en vez de usar el driver de pymongo descomentar la linea siguiente
@@ -26,6 +27,8 @@ bot = telebot.TeleBot(token)
 # Si usamos pymongolab la siguiente linea tiene que ser nestra api key
 client = MongoClient(config.get("options","mongodb"))
 db = client.vitrasabot
+
+tz =pytz.timezone("Europe/Madrid")
 
 logging.info("VitrasaBot inicializado correctamente")
 
@@ -92,7 +95,7 @@ def obtener_parada(message, id):
         logging.debug("Informacion sobre los buses: {}".format(buses))
         
         texto = "*Parada Nº {} - {}*".format(parada["number"], parada["name"].encode("utf-8"))
-        texto += "\n" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        texto += "\n" + datetime.datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
         texto += "\n`{:2} {:2}{:20}\n---------------------------`".format("Min", "L", "Ruta")
 
         for bus in buses:
@@ -106,7 +109,7 @@ def obtener_parada(message, id):
         # Si usamos pymongolab descomentar esta query y comentar la siguiente
         # user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : 'True'}})
         user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : True}})
-        db.users.update_one({"_id": message.chat.id }, {"$set": {"_id": message.chat.id, "username" : message.chat.username or message.chat.first_name, "last_request" : datetime.datetime.now().strftime("%Y-%m-%d %H:%M")}}, upsert=True)
+        db.users.update_one({"_id": message.chat.id }, {"$set": {"_id": message.chat.id, "username" : message.chat.username or message.chat.first_name, "last_request" : datetime.datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M")}}, upsert=True)
         if user_data:
             text2 = '{} Borrar parada'.format((u'\U0000274C').encode("utf-8"))
             itembtnc = types.InlineKeyboardButton(text2, callback_data='{"del_stop": {"user" : ' + str(message.chat.id) + ' , "parada" : ' + str(id) + '}}')
