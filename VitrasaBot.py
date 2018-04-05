@@ -49,9 +49,9 @@ client = MongoClient(config.get("options","mongodb"))
 db = client.vitrasabot
 
 bot = telebot.TeleBot(API_TOKEN, threaded=False)
-# Remove webhook, it fails sometimes the set if there is a previous webhook
-bot.remove_webhook()
-logging.debug("Webhook borrado")
+# # Remove webhook, it fails sometimes the set if there is a previous webhook
+# bot.remove_webhook()
+# logging.debug("Webhook borrado")
 
 # Set webhook
 bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH, certificate=open(WEBHOOK_SSL_CERT, 'r'))
