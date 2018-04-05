@@ -6,8 +6,8 @@ except ImportError:
     import json
 
 import requests
-import requests_toolbelt.adapters.appengine
-requests_toolbelt.adapters.appengine.monkeypatch()
+# import requests_toolbelt.adapters.appengine
+# requests_toolbelt.adapters.appengine.monkeypatch()
 import urllib, urllib2
 
 try:
@@ -26,7 +26,7 @@ req_session = requests.session()
 API_URL = "https://api.telegram.org/bot{0}/{1}"
 FILE_URL = "https://api.telegram.org/file/bot{0}/{1}"
 
-CONNECT_TIMEOUT = 3.5
+CONNECT_TIMEOUT = 40
 READ_TIMEOUT = 9999
 
 
