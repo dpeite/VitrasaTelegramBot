@@ -80,7 +80,7 @@ def inline_button_callback(call):
 
 def obtener_parada(message, id):
     logging.info("Obtenemos informacion de los buses correspondientes a la parada {}".format(str(id)))
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
         
     try:
         buses = vitrasa.get_stop_estimates(id)
@@ -139,7 +139,7 @@ def obtener_parada(message, id):
 
 def del_stop(message, info):
     logging.info("Borrando parada de favoritas")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
 
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
     # db.users.update({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
@@ -151,7 +151,7 @@ def del_stop(message, info):
      
 def add_stop(message, info):
     logging.info("Añadiendo parada a favoritas")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
 
     user_data = db.users.find_one({'_id': info["user"]})
     paradas_favoritas = {}
@@ -171,7 +171,7 @@ def add_stop(message, info):
         
 def obtener_paradas_favoritas(message, info):
     logging.info("Obteniendo paradas favoritas")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
     user_data = db.users.find_one({'_id': info["user"]})
     markup = types.InlineKeyboardMarkup()
     if user_data and "paradas_favoritas" in user_data and user_data["paradas_favoritas"]:
@@ -193,7 +193,7 @@ def obtener_paradas_favoritas(message, info):
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     logging.info("Comando welcome")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
 
     markup = types.InlineKeyboardMarkup()
     itembtna = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U00002B50').encode("utf-8")), callback_data='{"paradas_favoritas": {"user" : ' + str(message.chat.id) + '}}')
@@ -208,13 +208,13 @@ def send_welcome(message):
 @bot.message_handler(commands=['about'])
 def about(message):
     logging.info("Comando about")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
     bot.send_message(message.chat.id, "No estamos afiliados a Vitrasa\nCopyright 2018.\nCodigo fuente: https://github.com/dpeite/VitrasaTelegramBot", disable_web_page_preview=True)
 
 @bot.message_handler(commands=['status'])
 def status(message):
     logging.info("Comando status")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
     try:
         vitrasa.get_stop(14264)
         bot.send_message(message.chat.id, "{} Bot\n{} Conexión con Vitrasa".format((u'\u2705').encode("utf-8"),(u'\u2705').encode("utf-8")))
@@ -224,7 +224,7 @@ def status(message):
 @bot.message_handler(content_types=['text'])
 def id_parada(message):
     logging.info("Recibida parada con id {}".format(message.text))
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
     
     test = db.users.find_one({'_id': message.from_user.id})
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
@@ -248,7 +248,7 @@ def coordenadas_parada(message):
     lon =  message.location.longitude
 
     logging.info("Recibidas coordenadas lat {}, lon {}".format(lat, lon))
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, message.chat.username or message.chat.first_name))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
     
     try:
         paradas = vitrasa.get_stops_around(lat, lon)
