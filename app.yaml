@@ -10,5 +10,7 @@ handlers:
 libraries:
 - name: ssl
   version: latest
+- name: pytz
+  version: latest
 - name: webapp2
   version: "2.5.2"
