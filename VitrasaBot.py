@@ -100,7 +100,7 @@ def obtener_parada(message, id):
 
         for bus in buses:
             # print bus["line"], bus["route"].encode("utf-8"), bus["minutes"]
-            texto += "\n`{:2} {:2} {:20}`".format(bus["minutes"], bus["line"], bus["route"].encode("utf-8"))
+            texto += "\n`{:2} {:2} {:20}`".format(bus["minutes"], bus["line"], bus["route"].encode("utf-8").strip())
 
         markup = types.InlineKeyboardMarkup()
         itembtna = types.InlineKeyboardButton('{} Actualizar'.format((u'\U0001F504').encode("utf-8")), callback_data='{"id_parada": ' + str(id) + '}')
@@ -195,7 +195,7 @@ def obtener_paradas_favoritas(message, info):
         
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    logging.info("Comando welcome")
+    logging.info("Comando {}".format(message.text.encode("utf-8")))
     logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
 
     markup = types.InlineKeyboardMarkup()
@@ -205,7 +205,8 @@ def send_welcome(message):
     text = "Bienvenido, para consultar los horarios necesito alguna información:\n\n \
     - Puedes enviarme el número de la parada.\n\n \
     - Puedes enviarme tu ubicación y automaticamente te devolveré la información de la parada más próxima.\n\n \
-    - Puedes hacer click en el botón 'Paradas cercanas' y te mostraré una lista con las paradas ordenadas por proximidad. _(Puedes filtrar esta lista por el nombre de la calle o el número de la parada)_"
+    - Puedes hacer click en el botón 'Paradas cercanas' y te mostraré una lista con las paradas ordenadas por proximidad. _(Puedes filtrar esta lista por el nombre de la calle o el número de la parada)_ \
+* La busqueda de paradas cercanas solo funciona desde móviles, es necesario darle permiso al bot para conocer tu ubicación.*"
     bot.send_message(message.chat.id, text, parse_mode="Markdown", reply_markup=markup)
 
 @bot.message_handler(commands=['about'])
@@ -226,7 +227,7 @@ def status(message):
 
 @bot.message_handler(content_types=['text'])
 def id_parada(message):
-    logging.info("Recibida parada con id {}".format(message.text))
+    logging.info("Recibida parada con id {}".format(message.text.encode("utf-8")))
     logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
     
     test = db.users.find_one({'_id': message.from_user.id})
