@@ -73,7 +73,7 @@ def inline_button_callback(call):
     logging.debug("Callback botones: {}".format(call.data))
     parada = json.loads(call.data)
     if "id_parada" in parada:
-        obtener_parada(call.message, str(parada["id_parada"]))
+        obtener_parada(call.message, int(parada["id_parada"]))
     elif "paradas_favoritas" in parada:
         obtener_paradas_favoritas(call.message, parada["paradas_favoritas"])
     elif "add_stop" in parada:
@@ -169,7 +169,7 @@ def del_stop(message, info):
 
     logging.debug("Parada {} borrada correctamente de la BD".format(str(info["parada"])))    
 
-    obtener_parada(message, str(info["parada"]))
+    obtener_parada(message, int(info["parada"]))
      
 def add_stop(message, info):
     logging.info("Añadiendo parada a favoritas")
@@ -189,7 +189,7 @@ def add_stop(message, info):
 
     logging.debug("Parada {} - {} añadida correctamente a la BD".format(str(info["parada"]), parada["name"].encode("utf-8")))
     
-    obtener_parada(message, str(info["parada"]))
+    obtener_parada(message, int(info["parada"]))
         
 def obtener_paradas_favoritas(message, info):
     logging.info("Obteniendo paradas favoritas")
@@ -564,7 +564,7 @@ def id_parada(message):
         text = "Introduce un número de parada, envíame tu ubicación o busca las paradas más próximas"
         bot.send_message(message.chat.id, text, reply_markup=markup)
         return
-    obtener_parada(message, id)
+    obtener_parada(message, int(id))
 
 @bot.message_handler(content_types=['location'])
 def coordenadas_parada(message):
