@@ -8,3 +8,8 @@ suds-jurko
 # pymongo # In appengine pymongo not work use pymongolab
 # Not install pymongolab because has a bug, the library it's already in this repository
 # pymongolab
+
+beautifulsoup4
+geopy
+scipy
+lxml
