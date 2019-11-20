@@ -4,3 +4,8 @@ requests
 suds-jurko
 pymongo
 pytz
+
+beautifulsoup4
+geopy
+scipy
+lxml

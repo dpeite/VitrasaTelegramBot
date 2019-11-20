@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-import ConfigParser
+import configparser
 import telebot
 import json
 import datetime
@@ -9,7 +9,7 @@ import hashlib
 import sched
 import time
 from telebot import types
-from api import vitrasa
+from api import vitrasa_new as vitrasa
 # En caso de querer usar la api http de mlab en vez de usar el driver de pymongo descomentar la linea siguiente
 # from pymongolab import MongoClient
 from pymongo import MongoClient
@@ -21,14 +21,14 @@ logging.getLogger("urllib3").setLevel(logging.INFO)
 
 logging.info("Inicializando VitrasaBot...")
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read("conf.ini")
 
 token = config.get("options","bot_token")
 bot = telebot.TeleBot(token)
 # connect to MongoDB, change the << MONGODB URL >> to reflect your own connection string
 # Si usamos pymongolab la siguiente linea tiene que ser nestra api key
-client = MongoClient(config.get("options","mongodb"))
+client = MongoClient(config.get("options","mongodb"), retryWrites=False)
 db = client.vitrasabot
 
 tz =pytz.timezone("Europe/Madrid")
@@ -53,7 +53,7 @@ def query_text(inline_query):
                     # Filtramos por nombre de parada o numero
                     if (inline_query.query not in parada['name'].lower()) and (inline_query.query not in str(parada['number'])):
                         continue
-                response = types.InlineQueryResultLocation(idx, "Nº" + str(parada['number']) + " " + parada['name'].encode("utf-8") + " - " + format(parada['distance'], '.0f') + "m", parada['location']['lat'], parada['location']['lng'])
+                response = types.InlineQueryResultLocation(idx, "Nº" + str(parada['number']) + " " + parada['name'] + " - " + format(parada['distance'], '.0f') + "m", parada['location']['lat'], parada['location']['lng'])
 
                 inline_stops.append(response)
 
@@ -100,7 +100,7 @@ def inline_button_callback(call):
 
 def obtener_parada(message, id):
     logging.info("Obtenemos informacion de los buses correspondientes a la parada {}".format(str(id)))
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
         
     try:
         buses = vitrasa.get_stop_estimates(id)
@@ -111,31 +111,31 @@ def obtener_parada(message, id):
         logging.debug("Informacion de la parada: {}".format(parada))
         logging.debug("Informacion sobre los buses: {}".format(buses))
         
-        texto = "*Parada Nº {} - {}*".format(parada["number"], parada["name"].encode("utf-8"))
+        texto = "*Parada Nº {} - {}*".format(parada["number"], parada["name"])
         texto += "\n" + datetime.datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M:%S")
         texto += "\n`{:2} {:2}{:20}\n---------------------------`".format("Min", "L", "Ruta")
 
         for bus in buses:
-            # print bus["line"], bus["route"].encode("utf-8"), bus["minutes"]
-            texto += "\n`{:2} {:2} {:20}`".format(bus["minutes"], bus["line"], bus["route"].encode("utf-8").strip())
+            # print(bus["line"], bus["route"], bus["minutes"])
+            texto += "\n`{:2} {:2} {:20}`".format(bus["minutes"], bus["line"], bus["route"].strip())
 
         markup = types.InlineKeyboardMarkup()
-        itembtna = types.InlineKeyboardButton('{} Actualizar'.format((u'\U0001F504').encode("utf-8")), callback_data='{"id_parada": ' + str(id) + '}')
-        itembtnb = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E').encode("utf-8")), switch_inline_query_current_chat="")
+        itembtna = types.InlineKeyboardButton('{} Actualizar'.format((u'\U0001F504')), callback_data='{"id_parada": ' + str(id) + '}')
+        itembtnb = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E')), switch_inline_query_current_chat="")
 
         # Si usamos pymongolab descomentar esta query y comentar la siguiente
         # user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : 'True'}})
         user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : True}})
         db.users.update_one({"_id": message.chat.id }, {"$set": {"_id": message.chat.id, "username" : message.chat.username or message.chat.first_name, "last_request" : datetime.datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M")}}, upsert=True)
         if user_data:
-            text2 = '{} Borrar parada'.format((u'\U0000274C').encode("utf-8"))
+            text2 = '{} Borrar parada'.format((u'\U0000274C'))
             itembtnc = types.InlineKeyboardButton(text2, callback_data='{"del_stop": {"user" : ' + str(message.chat.id) + ' , "parada" : ' + str(id) + '}}')
         else:
-            text2 = '{} Guardar parada'.format((u'\U0001F4BE').encode("utf-8"))
+            text2 = '{} Guardar parada'.format((u'\U0001F4BE'))
             itembtnc = types.InlineKeyboardButton(text2, callback_data='{"add_stop": {"user" : ' + str(message.chat.id) + ' , "parada" : ' + str(id) + '}}')
 
-        itembtnd = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U00002B50').encode("utf-8")), callback_data='{"paradas_favoritas": {"user" : ' + str(message.chat.id) + '}}')
-        itembtne = types.InlineKeyboardButton('{} Avisame'.format((u'\U0001F6CE').encode("utf-8")), callback_data='{"menu_nuevo_aviso": {"user" : ' + str(message.chat.id) + ', "parada" : ' + str(id) + '}}')
+        itembtnd = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U00002B50')), callback_data='{"paradas_favoritas": {"user" : ' + str(message.chat.id) + '}}')
+        itembtne = types.InlineKeyboardButton('{} Avisame (Beta)'.format((u'\U0001F6CE')), callback_data='{"menu_nuevo_aviso": {"user" : ' + str(message.chat.id) + ', "parada" : ' + str(id) + '}}')
 
         markup.row(itembtna, itembtnb)
         markup.row(itembtnc, itembtnd)
@@ -153,15 +153,15 @@ def obtener_parada(message, id):
     except vitrasa.Error as e:
         bot.send_message(message.chat.id, "{}".format(e.message))
     except Exception as e:
-        print e
+        print(e)
         import sys
-        print sys.exc_info()[2].tb_lineno
+        print(sys.exc_info()[2].tb_lineno)
 
         bot.send_message(message.chat.id, "Se ha producido un error al realizar la petición")
 
 def del_stop(message, info):
     logging.info("Borrando parada de favoritas")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
 
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
     # db.users.update({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
@@ -173,7 +173,7 @@ def del_stop(message, info):
      
 def add_stop(message, info):
     logging.info("Añadiendo parada a favoritas")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
 
     user_data = db.users.find_one({'_id': info["user"]})
     paradas_favoritas = {}
@@ -181,19 +181,19 @@ def add_stop(message, info):
         paradas_favoritas = user_data["paradas_favoritas"]
 
     parada = vitrasa.get_stop(info["parada"]).to_dict()
-    paradas_favoritas[str(info["parada"])] = {"name" : parada["name"].encode("utf-8")}
+    paradas_favoritas[str(info["parada"])] = {"name" : parada["name"]}
     
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
     # db.users.update({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
     db.users.update_one({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
 
-    logging.debug("Parada {} - {} añadida correctamente a la BD".format(str(info["parada"]), parada["name"].encode("utf-8")))
+    logging.debug("Parada {} - {} añadida correctamente a la BD".format(str(info["parada"]), parada["name"]))
     
     obtener_parada(message, int(info["parada"]))
         
 def obtener_paradas_favoritas(message, info):
     logging.info("Obteniendo paradas favoritas")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
     user_data = db.users.find_one({'_id': info["user"]})
     markup = types.InlineKeyboardMarkup()
     if user_data and "paradas_favoritas" in user_data and user_data["paradas_favoritas"]:
@@ -201,37 +201,41 @@ def obtener_paradas_favoritas(message, info):
         logging.debug("Paradas favoritas: {}".format(paradas_favoritas))
         text =  "Estas son tus paradas guardadas:"
         for parada in paradas_favoritas:
-            markup.row(types.InlineKeyboardButton('{} - Nº {}'.format(paradas_favoritas[parada]["name"].encode("utf-8"), parada), callback_data='{"id_parada": ' + parada + '}'))
+            markup.row(types.InlineKeyboardButton('{} - Nº {}'.format(paradas_favoritas[parada]["name"], parada), callback_data='{"id_parada": ' + parada + '}'))
     else:
-        text =  "No hay paradas favoritas"
+        text = "No hay paradas favoritas"
         logging.debug("No hay paradas favoritas guardadas")
         
-    itembtna = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E').encode("utf-8")), switch_inline_query_current_chat="")
-    # itembtnb = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U0001F50E').encode("utf-8")), callback_data='{"paradas_favoritas": {"user" : ' + str(message.chat.id) + '}}')
+    itembtna = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E')), switch_inline_query_current_chat="")
+    # itembtnb = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U0001F50E')), callback_data='{"paradas_favoritas": {"user" : ' + str(message.chat.id) + '}}')
     markup.row(itembtna)
     
     bot.send_message(message.chat.id, text, reply_markup=markup)
 
 def crear_menu_nuevo_aviso(message, info):
     logging.info("Crear aviso 0: Seleccionar linea")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
                   
     buses = vitrasa.get_stop_estimates(info["parada"])
-    buses = sorted(buses, key=lambda bus: bus.minutes)
-    buses = [bus.to_dict() for bus in buses]
+
+    seen = dict()
+    [x for x in buses if x.line+x.route not in seen.keys() and not seen.update({x.line+x.route: x.to_dict()})]
+    buses = seen.values()
+
+    buses = sorted(buses, key=lambda bus: bus.get('minutes'))
 
     markup = types.InlineKeyboardMarkup()
     for bus in buses:
         m = hashlib.md5()
         m.update(bus["line"].encode("utf-8") + bus["route"].encode("utf-8"))
-        markup.row(types.InlineKeyboardButton('{} {}'.format(bus["line"].encode("utf-8"), bus["route"].encode("utf-8")), callback_data='{"menu_aviso_tiempo":{"stop":' + str(info["parada"]) + ',"info":"'+m.hexdigest()[:5]+'"}}'))
+        markup.row(types.InlineKeyboardButton('{} {}'.format(bus["line"], bus["route"]), callback_data='{"menu_aviso_tiempo":{"stop":' + str(info["parada"]) + ',"info":"'+m.hexdigest()[:5]+'"}}'))
 
     markup.row(types.InlineKeyboardButton('Salir', callback_data='{"borrar_mensaje": {"user" : ' + str(message.chat.id) + '}}'))
     bot.send_message(message.chat.id, "Estas son las lineas correspondientes a la parada "+str(info["parada"]), reply_markup=markup)
 
 def crear_menu_aviso_tiempo(message, info):
     logging.info("Crear aviso 1: Seleccionar tiempo")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
                   
     borrar_mensaje(message)
 
@@ -258,7 +262,7 @@ def crear_menu_aviso_tiempo(message, info):
             
         markup.row(types.InlineKeyboardButton('Salir', callback_data='{"borrar_mensaje": {"user" : ' + str(message.chat.id) + '}}'))
         bot.send_message(message.chat.id, "Selecciona cuanto tiempo antes quieres ser avisado para la linea: "+
-                         line_info["line"].encode("utf-8") + " - " + line_info["route"].encode("utf-8"), reply_markup=markup)
+                         line_info["line"] + " - " + line_info["route"], reply_markup=markup)
 
     else:
         logging.debug("No hemos encontrado la linea, o bien ya no aparece en la parada o no tenemos conexion con Vitrasa")
@@ -267,7 +271,7 @@ scheduler = sched.scheduler(time.time, time.sleep)
 
 def crear_aviso(message, info, scheduled=False):
     logging.info("Crear aviso 2: Añadir aviso a scheduler y base de datos")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
 
     #### TODO
     # -Revisar posibles excepciones
@@ -286,6 +290,10 @@ def crear_aviso(message, info, scheduled=False):
         if line_info["minutes"] <= info["time"]:
             logging.debug("Faltan menos de {} minutos, avisamos al usuario".format(info["time"]))
             bot.send_message(message.chat.id, "Faltan menos de {} minutos".format(info["time"]))
+            m = hashlib.md5()
+            m.update(info["info"].encode("utf-8") + str(info['stop']).encode("utf-8") + str(info['time']).encode("utf-8"))
+            line_hash = m.hexdigest()[:5]
+            borrar_aviso(message, {'id': line_hash}, False)
         else:
             time_delta = int(line_info["minutes"])- int(info["time"])
             if time_delta <= 2:
@@ -335,7 +343,7 @@ def crear_aviso(message, info, scheduled=False):
                         avisos[info["info"]] = {str(info["stop"]) : {}}
                     if not str(info["time"]) in avisos[info["info"]][str(info["stop"])]:
                         avisos[info["info"]][str(info["stop"])][str(info["time"])] = {}
-                    avisos[info["info"]][str(info["stop"])][str(info["time"])] = {"parada_name" : parada["name"].encode("utf-8"), "linea" : line_info["line"], "ruta" : line_info["route"],
+                    avisos[info["info"]][str(info["stop"])][str(info["time"])] = {"parada_name" : parada["name"], "linea" : line_info["line"], "ruta" : line_info["route"],
                                                                                     "time_created" : datetime.datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M")}
                     # Si usamos pymongolab descomentar esta query y comentar la siguiente
                     # db.users.update({"_id": message.chat.id }, {"$set": {"_id": message.chat.id, "avisos" : avisos}}, upsert=True)
@@ -372,7 +380,7 @@ def crear_aviso(message, info, scheduled=False):
             
 def mostrar_info_aviso(message, info):
     logging.info("Mostrar informacion sobre aviso")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
     
     user_data = db.users.find_one({'_id': message.chat.id})
     avisos = {}
@@ -384,7 +392,7 @@ def mostrar_info_aviso(message, info):
             for aviso in avisos[linea][parada]:
                 info_aviso = avisos[linea][parada][aviso]
                 m = hashlib.md5()
-                m.update(linea+parada+aviso)
+                m.update(linea.encode("utf-8")+parada.encode("utf-8")+aviso.encode("utf-8"))
                 digest = m.hexdigest()[:5]
                 if info["id"] == digest:
                     buses = vitrasa.get_stop_estimates(parada)
@@ -405,10 +413,10 @@ def mostrar_info_aviso(message, info):
 *Ruta:* {} {} \n\
 *Minutos restantes:* {}min \n\
 *Avisar a:* {}min\n\
-*Fecha de creación del aviso:* {}".format(parada, info_aviso["parada_name"], info_aviso["linea"], info_aviso["ruta"].encode("utf-8"), line_info["minutes"], aviso, info_aviso["time_created"])
+*Fecha de creación del aviso:* {}".format(parada, info_aviso["parada_name"], info_aviso["linea"], info_aviso["ruta"], line_info["minutes"], aviso, info_aviso["time_created"])
                         markup = types.InlineKeyboardMarkup()
-                        itembtna = types.InlineKeyboardButton('{} Borrar aviso'.format((u'\U0000274C').encode("utf-8")), callback_data='{"borrar_aviso": {"id" : "' + info["id"] + '"}}')
-                        itembtnb = types.InlineKeyboardButton('{} Mostrar avisos'.format((u'\U00002B50').encode("utf-8")), callback_data='{"mostrar_avisos": {}}')
+                        itembtna = types.InlineKeyboardButton('{} Borrar aviso'.format((u'\U0000274C')), callback_data='{"borrar_aviso": {"id" : "' + info["id"] + '"}}')
+                        itembtnb = types.InlineKeyboardButton('{} Mostrar avisos'.format((u'\U00002B50')), callback_data='{"mostrar_avisos": {}}')
                         markup.row(itembtna, itembtnb)
                         bot.send_message(message.chat.id, text, parse_mode="Markdown", reply_markup=markup)
                     else:
@@ -420,9 +428,9 @@ def mostrar_info_aviso(message, info):
 *No se ha encontrado ningún bus en esta parada que coincida con los datos del aviso guardado*".format(parada, info_aviso["parada_name"], info_aviso["linea"], info_aviso["ruta"], aviso, info_aviso["time_created"])
                         bot.send_message(message.chat.id, text, parse_mode="Markdown")
 
-def borrar_aviso(message, info):
+def borrar_aviso(message, info, send_message = True):
     logging.info("Borrar aviso")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
     
     user_data = db.users.find_one({'_id': message.chat.id})
     avisos = {}
@@ -434,7 +442,7 @@ def borrar_aviso(message, info):
             for aviso in avisos[linea][parada]:
                 info_aviso = avisos[linea][parada][aviso]
                 m = hashlib.md5()
-                m.update(linea+parada+aviso)
+                m.update(linea.encode("utf-8")+parada.encode("utf-8")+aviso.encode("utf-8"))
                 digest = m.hexdigest()[:5]
                 if info["id"] == digest:
                     logging.debug("Borramos de la base de datos el aviso")
@@ -450,7 +458,8 @@ def borrar_aviso(message, info):
                         break
                     break
     logging.debug("Aviso borrado correctamente")
-    bot.send_message(message.chat.id, "Aviso eliminado")
+    if send_message:
+        bot.send_message(message.chat.id, "Aviso eliminado")
                     
 def borrar_mensaje(message):
     logging.info("Borramos mensaje")
@@ -461,8 +470,9 @@ def borrar_mensaje(message):
 
 def get_line_info_from_hash(stop, search_hash):
     buses = vitrasa.get_stop_estimates(stop)
-    buses = sorted(buses, key=lambda bus: bus.minutes)
-    buses = [bus.to_dict() for bus in buses]
+    seen = dict()
+    [x for x in buses if x.line+x.route not in seen.keys() and not seen.update({x.line+x.route: x.to_dict()})]
+    buses = seen.values()
 
     line_info = None
     for bus in buses:
@@ -477,12 +487,12 @@ def get_line_info_from_hash(stop, search_hash):
         
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    logging.info("Comando {}".format(message.text.encode("utf-8")))
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.info("Comando {}".format(message.text))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
 
     markup = types.InlineKeyboardMarkup()
-    itembtna = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U00002B50').encode("utf-8")), callback_data='{"paradas_favoritas": {"user" : ' + str(message.chat.id) + '}}')
-    itembtnb = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E').encode("utf-8")), switch_inline_query_current_chat="")
+    itembtna = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U00002B50')), callback_data='{"paradas_favoritas": {"user" : ' + str(message.chat.id) + '}}')
+    itembtnb = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E')), switch_inline_query_current_chat="")
     markup.row(itembtna, itembtnb)
     text = "Bienvenido, para consultar los horarios necesito alguna información:\n\n \
     - Puedes enviarme el número de la parada.\n\n \
@@ -494,23 +504,23 @@ def send_welcome(message):
 @bot.message_handler(commands=['about'])
 def about(message):
     logging.info("Comando about")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
-    bot.send_message(message.chat.id, "No estamos afiliados a Vitrasa\nCopyright 2018.\nCodigo fuente: https://github.com/dpeite/VitrasaTelegramBot", disable_web_page_preview=True)
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
+    bot.send_message(message.chat.id, "No estamos afiliados a Vitrasa\nCopyright 2019.\nCodigo fuente: https://github.com/dpeite/VitrasaTelegramBot", disable_web_page_preview=True)
 
 @bot.message_handler(commands=['status'])
 def status(message):
     logging.info("Comando status")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
     try:
         vitrasa.get_stop(14264)
-        bot.send_message(message.chat.id, "{} Bot\n{} Conexión con Vitrasa".format((u'\u2705').encode("utf-8"),(u'\u2705').encode("utf-8")))
+        bot.send_message(message.chat.id, "{} Bot\n{} Conexión con Vitrasa".format((u'\u2705'),(u'\u2705')))
     except Exception:
-        bot.send_message(message.chat.id, "{} Bot\n{} Conexión con Vitrasa".format((u'\u2705').encode("utf-8"), (u'\u274C').encode("utf-8")))
+        bot.send_message(message.chat.id, "{} Bot\n{} Conexión con Vitrasa".format((u'\u2705'), (u'\u274C')))
 
 @bot.message_handler(commands=['avisos'])
 def avisos(message):
     logging.info("Comando avisos")
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
 
     #TODO Borrar avisos si ha pasado mas de 2 horas desde su creación
     user_data = db.users.find_one({'_id': message.chat.id})
@@ -528,9 +538,9 @@ def avisos(message):
                 # Si han pasado más de dos horas no mostramos los avisos
                 if (datetime.datetime.now(tz=tz) - datetime.timedelta(hours=2)) < tz.localize(time_created):
                     m = hashlib.md5()
-                    m.update(linea+parada+aviso)
+                    m.update(linea.encode("utf-8")+parada.encode("utf-8")+aviso.encode("utf-8"))
                     
-                    itembtna = types.InlineKeyboardButton('{} min - {} {} - {}'.format( aviso, info_aviso["linea"].encode("utf-8"), info_aviso["ruta"].encode("utf-8"), info_aviso["parada_name"]), callback_data='{"mostrar_aviso": {"id" : "' + m.hexdigest()[:5] + '"}}')
+                    itembtna = types.InlineKeyboardButton('{} min - {} {} - {}'.format( aviso, info_aviso["linea"], info_aviso["ruta"], info_aviso["parada_name"]), callback_data='{"mostrar_aviso": {"id" : "' + m.hexdigest()[:5] + '"}}')
                     markup.row(itembtna)
                 else:
                     logging.debug("Han pasado mas de dos horas, asi que no mostramos este aviso")
@@ -547,8 +557,8 @@ def avisos(message):
         
 @bot.message_handler(content_types=['text'])
 def id_parada(message):
-    logging.info("Recibida parada con id {}".format(message.text.encode("utf-8")))
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.info("Recibida parada con id {}".format(message.text))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
     
     test = db.users.find_one({'_id': message.from_user.id})
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
@@ -558,8 +568,8 @@ def id_parada(message):
     if not id.isdigit():
         logging.debug("La parada introducida no es un numero")
         markup = types.InlineKeyboardMarkup()
-        itembtna = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E').encode("utf-8")), switch_inline_query_current_chat="")
-        itembtnb = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U00002B50').encode("utf-8")), callback_data='{"paradas_favoritas": {"user" : ' + str(message.from_user.id) + '}}')
+        itembtna = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E')), switch_inline_query_current_chat="")
+        itembtnb = types.InlineKeyboardButton('{} Paradas favoritas'.format((u'\U00002B50')), callback_data='{"paradas_favoritas": {"user" : ' + str(message.from_user.id) + '}}')
         markup.row(itembtnb, itembtna)
         text = "Introduce un número de parada, envíame tu ubicación o busca las paradas más próximas"
         bot.send_message(message.chat.id, text, reply_markup=markup)
@@ -572,7 +582,7 @@ def coordenadas_parada(message):
     lon =  message.location.longitude
 
     logging.info("Recibidas coordenadas lat {}, lon {}".format(lat, lon))
-    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username.encode("utf-8")) or (message.chat.first_name and message.chat.first_name.encode("utf-8"))))
+    logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
     
     try:
         paradas = vitrasa.get_stops_around(lat, lon)
