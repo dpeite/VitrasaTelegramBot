@@ -1,6 +1,6 @@
 # -*- coding: utf-8 *-*
-from pymongolab import database
-from mongolabclient import MongoLabClient
+from lib.pymongolab import database
+from lib.mongolabclient import MongoLabClient
 
 
 class MongoClient(object):

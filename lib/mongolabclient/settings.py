@@ -1,5 +1,5 @@
 # -*- coding: utf-8 *-*
-from mongolabclient import errors
+from lib.mongolabclient import errors
 
 VAL_API = "validate-api-key"
 """Pseudo-code for Validation API key operation."""

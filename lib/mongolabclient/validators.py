@@ -1,5 +1,5 @@
 # -*- coding: utf-8 *-*
-from mongolabclient import errors
+from lib.mongolabclient import errors
 import re
 
 
@@ -37,8 +37,8 @@ def check_list_documents_params(**kwargs):
     they are correct, removing them if no have a value or raise a TypeError if
     they have a not expected type."""
     params = {}
-    keys = __param_types.keys() + __default_params.keys() + __key_params.keys()
-    for key, value in kwargs.iteritems():
+    keys = list(__param_types.keys()) + list(__default_params.keys()) + list(__key_params.keys())
+    for key, value in kwargs.items():
         if key not in keys:
             raise Exception("Invalid parameter %r" % (key))
         if not isinstance(value, __param_types[key]):

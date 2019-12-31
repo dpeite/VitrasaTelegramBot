@@ -1,7 +1,7 @@
 # -*- coding: utf-8 *-*
 from bson.objectid import ObjectId
 from collections import OrderedDict
-from pymongolab import cursor, helpers
+from lib.pymongolab import cursor, helpers
 
 
 class Collection(object):
@@ -108,7 +108,7 @@ class Collection(object):
            u'foo': u'bar', u'tld': u'org'}]
         """
         if isinstance(spec_or_id, ObjectId) or \
-            isinstance(spec_or_id, basestring):
+            isinstance(spec_or_id, str):
             return self.database.connection.request.view_document(
                 self.database.name, self.name, spec_or_id)
         return cursor.Cursor(self, spec_or_id, fields, skip, limit, **kwargs)
@@ -195,7 +195,7 @@ class Collection(object):
            u'tld': u'com'}
         """
         if isinstance(spec_or_id, ObjectId) or \
-            isinstance(spec_or_id, basestring):
+            isinstance(spec_or_id, str):
             return self.database.connection.request.view_document(
                 self.database.name, self.name, spec_or_id)
         if not spec_or_id:
@@ -339,7 +339,7 @@ class Collection(object):
            22
         """
         if isinstance(spec_or_id, ObjectId) or \
-            isinstance(spec_or_id, basestring):
+            isinstance(spec_or_id, str):
             return self.database.connection.request.delete_document(
                 self.database.name, self.name, spec_or_id)
         if not spec_or_id:

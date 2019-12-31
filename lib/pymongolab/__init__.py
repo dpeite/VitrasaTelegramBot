@@ -19,5 +19,5 @@ ALL = 2
 """Profile all operations."""
 
 
-from pymongolab.connection import Connection
-from pymongolab.mongo_client import MongoClient
+from lib.pymongolab.connection import Connection
+from lib.pymongolab.mongo_client import MongoClient

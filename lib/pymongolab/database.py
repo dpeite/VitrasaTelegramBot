@@ -1,6 +1,6 @@
 # -*- coding: utf-8 *-*
 from collections import OrderedDict
-from pymongolab import collection
+from lib.pymongolab import collection
 
 
 class Database(object):
@@ -150,7 +150,7 @@ class Database(object):
         cmd = OrderedDict()
         if isinstance(command, dict):
             cmd.update(command)
-        elif isinstance(command, basestring):
+        elif isinstance(command, str):
             cmd[command] = str(value)
         cmd.update(kwargs)
         return self.connection.request.run_command(self.name, cmd)

@@ -4,8 +4,8 @@ try:
 except ImportError:
     import json
 import urllib
-import urllib2
-from mongolabclient import settings, validators, errors, json_util
+# import urllib2
+from lib.mongolabclient import settings, validators, errors, json_util
 
 
 class MongoLabClient(object):
@@ -32,9 +32,9 @@ class MongoLabClient(object):
         self.settings = settings.MongoLabSettings(version)
         self.__content_type = 'application/json;charset=utf-8'
         if proxy_url:
-            self.__proxy_handler = urllib2.ProxyHandler({"https": proxy_url})
+            self.__proxy_handler = urllib.request.ProxyHandler({"https": proxy_url})
         else:
-            self.__proxy_handler = urllib2.ProxyHandler()
+            self.__proxy_handler = urllib.request.ProxyHandler()
         if not self.__validate_api_key():
             raise errors.InvalidAPIKey(self.api_key)
 
@@ -75,34 +75,36 @@ class MongoLabClient(object):
         url = self.__get_full_url(operation, slug_params)
         if operation["method"] == "GET":
             kwargs["apiKey"] = self.api_key
-            params = urllib.urlencode(kwargs)
-            req = urllib2.Request(url + "?%s" % params)
+            params = urllib.parse.urlencode(kwargs)
+            req = urllib.request.Request(url + "?%s" % params)
         elif operation["method"] == "POST":
             params = kwargs.get("data", {})
-            req = urllib2.Request(url + "?apiKey=%s" % self.api_key)
+            req = urllib.request.Request(url + "?apiKey=%s" % self.api_key)
             req.add_header("Content-Type", self.__content_type)
-            req.add_data(json.dumps(params, default=json_util.default))
+            req.data = json.dumps(params, default=json_util.default)
+            # req.add_data(json.dumps(params, default=json_util.default))
         elif operation["method"] == "PUT":
             params = kwargs["data"]
             kwargs["apiKey"] = self.api_key
             del kwargs["data"]
-            qs = urllib.urlencode(kwargs)
-            req = urllib2.Request(url + "?%s" % qs)
+            qs = urllib.parse.urlencode(kwargs)
+            req = urllib.request.Request(url + "?%s" % qs)
             req.add_header("Content-Type", self.__content_type)
-            req.add_data(json.dumps(params, default=json_util.default))
+            # req.add_data(json.dumps(params, default=json_util.default))
+            req.data = json.dumps(params, default=json_util.default)
             req.get_method = lambda: operation["method"]
         else:
             kwargs["apiKey"] = self.api_key
-            params = urllib.urlencode(kwargs)
-            req = urllib2.Request(url + "?%s" % params)
+            params = urllib.parse.urlencode(kwargs)
+            req = urllib.request.Request(url + "?%s" % params)
             req.get_method = lambda: operation["method"]
-        opener = urllib2.build_opener(self.proxy_handler)
-        urllib2.install_opener(opener)
+        opener = urllib.request.build_opener(self.proxy_handler)
+        urllib.request.install_opener(opener)
         try:
             f = opener.open(req)
             return {"status": f.getcode(), "result": json.loads(f.read(),
                 object_hook=json_util.object_hook)}
-        except urllib2.HTTPError, e:
+        except urllib.request.HTTPError as e:
             return {"status": e.getcode(), "result": json.loads(e.read(),
                 object_hook=json_util.object_hook)}
 

@@ -21,9 +21,9 @@ def _index_document(index_list):
 
     index = OrderedDict()
     for (key, value) in index_list:
-        if not isinstance(key, basestring):
+        if not isinstance(key, str):
             raise TypeError("first item in each key pair must be a string")
-        if not isinstance(value, (basestring, int)):
+        if not isinstance(value, (str, int)):
             raise TypeError("second item in each key pair must be ASCENDING, "
                             "DESCENDING, GEO2D, GEOHAYSTACK, TEXT, or other "
                             "valid MongoDB index specifier.")
