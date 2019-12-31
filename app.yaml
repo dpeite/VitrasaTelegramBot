@@ -1,16 +1,7 @@
-runtime: python27
-api_version: 1
-threadsafe: yes
+runtime: python37
+entrypoint: gunicorn -b :$PORT VitrasaBot:app
 
 handlers:
 - url: .*  # This regex directs all routes to main.app
-  script: VitrasaBot.app
+  script: auto
   secure: always
-
-libraries:
-- name: ssl
-  version: latest
-- name: pytz
-  version: latest
-- name: webapp2
-  version: "2.5.2"

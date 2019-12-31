@@ -14,10 +14,10 @@ import time
 from telebot import types
 from api import vitrasa_new as vitrasa
 # En caso de querer usar la api http de mlab en vez de usar el driver de pymongo descomentar la linea siguiente
-from pymongolab import MongoClient
-# from pymongo import MongoClient
+# from lib.pymongolab import MongoClient
+from pymongo import MongoClient
 
-config = configParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read("conf.ini")
 
 API_TOKEN = config.get("options","bot_token")
@@ -25,21 +25,10 @@ API_TOKEN = config.get("options","bot_token")
 WEBHOOK_HOST = config.get("options", "webhook_host")
 WEBHOOK_PORT = 443  # 443, 80, 88 or 8443 (port need to be 'open')
 
-WEBHOOK_SSL_CERT = './webhook_cert.pem'  # Path to the ssl certificate
-WEBHOOK_SSL_PRIV = './webhook_pkey.pem'  # Path to the ssl private key
-
-# Quick'n'dirty SSL certificate generation:
-#
-# openssl genrsa -out webhook_pkey.pem 2048
-# openssl req -new -x509 -days 3650 -key webhook_pkey.pem -out webhook_cert.pem
-#
-# When asked for "Common Name (e.g. server FQDN or YOUR name)" you should reply
-# with the same value in you put in WEBHOOK_HOST
-
 WEBHOOK_URL_BASE = "https://%s:%s" % (WEBHOOK_HOST, WEBHOOK_PORT)
 WEBHOOK_URL_PATH = "/%s/" % (API_TOKEN)
 
-logging.basicConfig(filename='vitrasa.log', format='%(asctime)s %(levelname)s: %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', level=logging.DEBUG)
 # No nos interesa el log de DEBUG de suds ni de urllib3
 logging.getLogger('suds').setLevel(logging.INFO)
 logging.getLogger("urllib3").setLevel(logging.INFO)
@@ -57,7 +46,7 @@ bot = telebot.TeleBot(API_TOKEN, threaded=False)
 # logging.debug("Webhook borrado")
 
 # Set webhook
-bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH, certificate=open(WEBHOOK_SSL_CERT, 'r'))
+bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH)
 logging.debug("Webhook creado")
 
 app = Flask(__name__)
@@ -171,8 +160,8 @@ def obtener_parada(message, id):
         itembtnb = types.InlineKeyboardButton('{} Paradas cercanas'.format((u'\U0001F50E')), switch_inline_query_current_chat="")
 
         # Si usamos pymongolab descomentar esta query y comentar la siguiente
-        user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : 'True'}})
-        # user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : True}})
+        # user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : 'True'}})
+        user_data = db.users.find_one({'_id': message.chat.id,'paradas_favoritas.' + str(id): {'$exists' : True}})
         db.users.update({"_id": message.chat.id }, {"$set": {"_id": message.chat.id, "username" : message.chat.username or message.chat.first_name, "last_request" : datetime.datetime.now(tz=tz).strftime("%Y-%m-%d %H:%M")}}, upsert=True)
         # db.users.update_one({"_id": message.chat.id }, {"$set": {"_id": message.chat.id, "username" : message.chat.username or message.chat.first_name, "last_request" : datetime.datetime.now().strftime("%Y-%m-%d %H:%M")}}, upsert=True)
 
@@ -213,8 +202,8 @@ def del_stop(message, info):
     logging.debug("Mensaje recibido de {} - {}".format(message.chat.id, (message.chat.username and message.chat.username) or (message.chat.first_name and message.chat.first_name)))
 
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
-    db.users.update({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
-    # db.users.update_one({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
+    # db.users.update({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
+    db.users.update_one({"_id": info["user"] }, {"$unset": {"paradas_favoritas." + str(info["parada"]) : ""}}, upsert=True)
 
     logging.debug("Parada {} borrada correctamente de la BD".format(str(info["parada"])))    
 
@@ -233,8 +222,8 @@ def add_stop(message, info):
     paradas_favoritas[str(info["parada"])] = {"name" : parada["name"]}
     
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
-    db.users.update({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
-    # db.users.update_one({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
+    # db.users.update({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
+    db.users.update_one({"_id": info["user"] }, {"$set": {"_id": info["user"], "paradas_favoritas" : paradas_favoritas}}, upsert=True)
 
     logging.debug("Parada {} - {} añadida correctamente a la BD".format(str(info["parada"]), parada["name"]))
     
@@ -289,7 +278,7 @@ def crear_menu_aviso_tiempo(message, info):
     borrar_mensaje(message)
 
     # Si han pasado más de 2 min desde el mensaje anterior y este cancelamos la creación
-    if message.date + 120 < int(datetime.datetime.now(tz=tz).strftime('%s')):
+    if message.date + 120 < int(datetime.datetime.now(tz=tz).timestamp()):
         logging.debug("Han pasado mas de 2 min desde el mensaje anterior, cancelamos creacion de aviso")
         bot.send_message(message.chat.id, "Han pasado más de 2 minutos desde que comenzaste el proceso de creación de un aviso. Vuelve a empezar de nuevo")
         return
@@ -327,7 +316,7 @@ def crear_aviso(message, info, scheduled=False):
     # -Revisar si se cae la conexión con vitrasa
 
     # Si han pasado más de 2 min desde el mensaje anterior y este cancelamos la creación
-    if not scheduled and message.date + 120 < int(datetime.datetime.now(tz=tz).strftime('%s')):
+    if not scheduled and message.date + 120 < int(datetime.datetime.now(tz=tz).timestamp()):
         logging.debug("Han pasado mas de 2 min desde el mensaje anterior, cancelamos creacion de aviso")
         borrar_mensaje(message)
         bot.send_message(message.chat.id, "Han pasado más de 2 minutos desde que comenzaste el proceso de creación de un aviso. Vuelve a empezar de nuevo")
@@ -611,8 +600,8 @@ def id_parada(message):
     
     test = db.users.find_one({'_id': message.from_user.id})
     # Si usamos pymongolab descomentar esta query y comentar la siguiente
-    db.users.update({"_id": message.from_user.id }, {"$set": {"_id":message.from_user.id, "username" : message.from_user.username}}, upsert=True)
-    # db.users.update_one({"_id": message.from_user.id }, {"$set": {"_id":message.from_user.id, "username" : message.from_user.username}}, upsert=True)
+    # db.users.update({"_id": message.from_user.id }, {"$set": {"_id":message.from_user.id, "username" : message.from_user.username}}, upsert=True)
+    db.users.update_one({"_id": message.from_user.id }, {"$set": {"_id":message.from_user.id, "username" : message.from_user.username}}, upsert=True)
     id = message.text
     if not id.isdigit():
         logging.debug("La parada introducida no es un numero")

@@ -1,15 +1,21 @@
-# Run 'pip install -r requirements.txt -t lib/' to install these packages
-# in `lib/` subdirectory. It is added to `sys.path` by `appengine_config.py`.
 Flask==0.10.1
 requests-toolbelt
 requests
 six==1.9.0
 suds-jurko
-# pymongo # In appengine pymongo not work use pymongolab
-# Not install pymongolab because has a bug, the library it's already in this repository
-# pymongolab
 
 beautifulsoup4
 geopy
 scipy
 lxml
+
+pytz
+webapp2
+gunicorn
+
+pyTelegramBotAPI
+pymongo==3.10.0
+
+PyOpenSSL
+httplib2
+certifi
