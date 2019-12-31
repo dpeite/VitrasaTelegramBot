@@ -240,7 +240,7 @@ def crear_menu_aviso_tiempo(message, info):
     borrar_mensaje(message)
 
     # Si han pasado más de 2 min desde el mensaje anterior y este cancelamos la creación
-    if message.date + 120 < int(datetime.datetime.now(tz=tz).strftime('%s')):
+    if message.date + 120 < int(datetime.datetime.now(tz=tz).timestamp()):
         logging.debug("Han pasado mas de 2 min desde el mensaje anterior, cancelamos creacion de aviso")
         bot.send_message(message.chat.id, "Han pasado más de 2 minutos desde que comenzaste el proceso de creación de un aviso. Vuelve a empezar de nuevo")
         return
@@ -278,7 +278,7 @@ def crear_aviso(message, info, scheduled=False):
     # -Revisar si se cae la conexión con vitrasa
 
     # Si han pasado más de 2 min desde el mensaje anterior y este cancelamos la creación
-    if not scheduled and message.date + 120 < int(datetime.datetime.now(tz=tz).strftime('%s')):
+    if not scheduled and message.date + 120 < int(datetime.datetime.now(tz=tz).timestamp()):
         logging.debug("Han pasado mas de 2 min desde el mensaje anterior, cancelamos creacion de aviso")
         borrar_mensaje(message)
         bot.send_message(message.chat.id, "Han pasado más de 2 minutos desde que comenzaste el proceso de creación de un aviso. Vuelve a empezar de nuevo")
